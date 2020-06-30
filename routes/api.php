@@ -47,8 +47,10 @@ Route::resource('user', 'User\UserController');
 Route::name('turnos')->get('turnos/llamar/proximo', 'Turnos\TurnosController@getProximoNumero');
 Route::name('turnos')->get('turnos/llamar/llamar', 'Turnos\TurnosController@Llamar');
 Route::name('turnos')->get('turnos/llamar/llamar/repetir', 'Turnos\TurnosController@LlamarRepetir');
+Route::name('turnos')->get('turnos/llamar/pantalla', 'Turnos\TurnosController@getListadoPantalla');
+
 Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero');
-Route::name('turnos-gestion')->put('turnos/numero/{id}', 'Turnos\TurnosController@Llamar');
+//Route::name('turnos-gestion')->put('turnos/numero/{id}', 'Turnos\TurnosController@Llamar');
 
 
 /* --------------------------------------------------------------------------  */

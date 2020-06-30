@@ -140,7 +140,7 @@ class MantenimientoController extends Controller
 
     public function updSectorUsuarioAsociado(Request $request, $id)
     {
- 
+        // EL USUARIO NO PUEDE TENER UN SECTOR PRINCIPAL Y UN SECTOR ASOCIADO IGUALES
       $res =  DB::table('secto_usuario_asociado')
       ->where('id', $id)
       ->update([  
