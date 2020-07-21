@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Mantenimiento;
-
+use Illuminate\Support\Facades\DB; 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -59,6 +59,46 @@ class MantenimientoController extends Controller
     }
 
 
+    public function getPuesto()
+    {      
+      $res = DB::select( DB::raw("SELECT `id`, `puesto_nombre` FROM `puesto`
+       "));
+          return response()->json($res, "200");
+    }
+
+
+/* -------------------------------------------------------------------------- */
+/*                                CREAR PUESTO                                */
+/* -------------------------------------------------------------------------- */
+
+    public function setPuesto(Request $request)
+    {      
+     try {
+
+        $id = DB::table('puesto')->insertGetId([
+            'puesto_nombre' =>  $request->puesto_nombre            
+        ]);    
+                  
+     } catch (\Throwable $th) {
+         return  response()->json('NO SE PUDO CREAR EL TURNO ERROR :'. $th, "500");
+     }
+     return response()->json($id, "200");
+    }
+
+
+    
+    public function updPuesto(Request $request, $id)
+    {
+ 
+      $res =  DB::table('puesto')
+      ->where('id', $id)
+      ->update([  
+        'puesto_nombre' => $request->input('puesto_nombre')
+       ]);
+        
+        return response()->json($res, "200");
+    }
+
 /* -------------------------------------------------------------------------- */
 /*                           OBTENER SECTOR USUARIO                           */
 /* -------------------------------------------------------------------------- */
@@ -102,18 +142,40 @@ class MantenimientoController extends Controller
     public function setSectorUsuario(Request $request)
     {      
      try {
-
+        $res = DB::select( DB::raw(
+            "SELECT `id`, `usuario_id`, `sector_id`, `fecha_ingreso`, `puesto_defecto` FROM `sector_usuario` WHERE usuario_id = :usuario_id
+              "), array(                       
+       'usuario_id' => $request->input('usuario_id')
+     ));
+        if($res) {
+            
+            $res =  DB::table('sector_usuario')
+            ->where('usuario_id', $request->input('usuario_id'))
+            ->update([  
+              'usuario_id' => $request->input('usuario_id'),
+              'sector_id' => $request->input('sector_id'),
+              'puesto_defecto' => $request->input('puesto_nombre'),
+              'fecha_ingreso' => date("Y-m-d H:i:s")]);
+        } else{
+            $res = DB::table('sector_usuario')->insertGetId([
+                'usuario_id' => $request->input('usuario_id'),  
+                'sector_id' =>  $request->input('sector_id'),        
+                'puesto_defecto' =>  $request->input('puesto_nombre'),   
+                'fecha_ingreso' => date("Y-m-d H:i:s")
+            ]);  
+        }
+        /* 
         $id = DB::table('sector_usuario')->insertGetId([
             'usuario_id' =>  $request->usuario_id,  
             'sector_id' => $request->sector_id,        
             'puesto_defecto' => $request->puesto_defecto,   
             'fecha_ingreso' => date("Y-m-d H:i:s")
-        ]);    
+        ]);     */
                   
      } catch (\Throwable $th) {
          return  response()->json('NO SE PUDO CREAR EL TURNO ERROR :'. $th, "500");
      }
-     return response()->json($id, "200");
+     return response()->json($res, "200");
     }
 
 

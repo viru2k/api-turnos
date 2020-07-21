@@ -289,5 +289,22 @@ private function actualizarLlamando($sector_usuario_id, $numero_id, $estado){
         $this->actualizarLlamando($sector_usuario_id,$numero_id,'LLAMANDO');
         return response()->json($llamando, "200");
     }
+
+
+    
+public function getSectorByUsuario(Request $request){
+
+    $usuario_id = $request->input('usuario_id');
+
+   $res = DB::select( DB::raw(
+   "SELECT sector_usuario.id, `usuario_id`, `sector_id`, `fecha_ingreso`, `puesto_defecto`, users.name, users.nombreyapellido, users.email, users.admin, sector.sector_nombre, sector.sector_abreviado, sector.estado 
+   FROM `sector_usuario`, users, sector 
+   WHERE sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id  AND sector_usuario.usuario_id = :usuario_id
+  "), array(                       
+       'usuario_id' => $usuario_id
+     ));
+     
+     return $res;
+}
     
 }

@@ -48,9 +48,8 @@ Route::name('turnos')->get('turnos/llamar/proximo', 'Turnos\TurnosController@get
 Route::name('turnos')->get('turnos/llamar/llamar', 'Turnos\TurnosController@Llamar');
 Route::name('turnos')->get('turnos/llamar/llamar/repetir', 'Turnos\TurnosController@LlamarRepetir');
 Route::name('turnos')->get('turnos/llamar/pantalla', 'Turnos\TurnosController@getListadoPantalla');
-
-Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero');
-//Route::name('turnos-gestion')->put('turnos/numero/{id}', 'Turnos\TurnosController@Llamar');
+Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero'); 
+Route::name('turnos-gestion')->get('turnos/usuario/sector', 'Turnos\TurnosController@getSectorByUsuario');
 
 
 /* --------------------------------------------------------------------------  */
@@ -62,8 +61,13 @@ Route::name('mantenimiento')->get( 'mantenimiento/sector', 'Mantenimiento\Manten
 Route::name('mantenimiento')->post('mantenimiento/sector', 'Mantenimiento\MantenimientoController@setSector');
 Route::name('mantenimiento')->put( 'mantenimiento/sector/{id}', 'Mantenimiento\MantenimientoController@updSector');
 
+Route::name('mantenimiento')->get( 'mantenimiento/puesto', 'Mantenimiento\MantenimientoController@getpuesto');
+Route::name('mantenimiento')->post('mantenimiento/puesto', 'Mantenimiento\MantenimientoController@setpuesto');
+Route::name('mantenimiento')->put( 'mantenimiento/puesto/{id}', 'Mantenimiento\MantenimientoController@updpuesto');
+
+
 Route::name('mantenimiento')->get( 'mantenimiento/sector/usuario', 'Mantenimiento\MantenimientoController@getSectorUsuario');
-Route::name('mantenimiento')->post('mantenimiento/sector/usuario', 'Mantenimiento\MantenimientoController@setSectorUsuario');
+Route::name('mantenimiento')->get('mantenimiento/sector/usuario/nuevo', 'Mantenimiento\MantenimientoController@setSectorUsuario');
 Route::name('mantenimiento')->put( 'mantenimiento/sector/usuario/{id}', 'Mantenimiento\MantenimientoController@updSectorUsuario');
 
 Route::name('mantenimiento')->get( 'mantenimiento/sector/usuario/asociar', 'Mantenimiento\MantenimientoController@getSectorUsuarioAsociado');
