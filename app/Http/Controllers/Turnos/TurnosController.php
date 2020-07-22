@@ -189,6 +189,77 @@ public function getListadoPantalla(){
      return $resultArray;
 }
 
+
+
+
+public function getListadoSectorCondicion(Request $request){
+
+    $tomorrow = date("Y-m-d", strtotime("+1 day"));
+    $hoy = date("Y-m-d");
+    $fecha_desde =   date('Y-m-d H:i:s', strtotime("$hoy $this->hora_desde"));
+    $fecha_hasta =   date('Y-m-d H:i:s', strtotime("$tomorrow $this->hora_hasta"));
+    $estado =  $request->input('estado');
+    $consulta =  $request->input('consulta');
+    $usuario_id =  $request->input('usuario_id');
+    $sector_id =  $request->input('sector_id');
+
+    // OBTENGO TODOS LOS NUMEROS PENDIENTES
+
+    if(($consulta == 'todos') &&($estado == 'pendiente')) {
+
+        
+        $res = DB::select( DB::raw("SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado
+        FROM numero, sector 
+        WHERE    numero.sector_id = sector.id 
+        AND sector.estado = 'ACTIVO'  
+        AND numero.estado ='PENDIENTE'    AND  numero.fecha_creacion BETWEEN '".$fecha_desde."' AND '".$fecha_hasta."' ORDER BY   numero.fecha_creacion ASC
+       "));
+    } 
+
+    // OBTENGO TODOS LOS NUMEROS ATENDIDOS
+
+    if(($consulta == 'todos') &&($estado == 'atendido')) {
+
+        
+        $res = DB::select( DB::raw("SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
+        users.id as usuario_id, sector_usuario.id as sector_usuario_id
+        FROM numero, sector, sector_usuario, users 
+        WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id 
+        AND sector.estado = 'ACTIVO'  
+        AND numero.estado ='ATENDIDO'    
+        AND  numero.fecha_creacion BETWEEN '".$fecha_desde."' AND '".$fecha_hasta."' ORDER BY   numero.fecha_creacion ASC
+       "));
+    }
+
+    // OBTENGO LOS NUMEROS PENDIENTES POR SECTOR
+
+    if(($consulta == 'sector') &&($estado == 'pendiente')) {
+
+        $res = DB::select( DB::raw("SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado
+        FROM numero, sector 
+        WHERE    numero.sector_id = sector.id 
+        AND sector.estado = 'ACTIVO'  AND numero.sector_id = '".$sector_id."'
+        AND numero.estado ='PENDIENTE'    AND  numero.fecha_creacion BETWEEN '".$fecha_desde."' AND '".$fecha_hasta."' ORDER BY   numero.fecha_creacion ASC
+       "));
+    }
+
+
+    if(($consulta == 'usuario') &&($estado == 'atendido')) {
+        
+        $res = DB::select( DB::raw("SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
+        users.id as usuario_id, sector_usuario.id as sector_usuario_id
+      FROM numero, sector, sector_usuario, users 
+      WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id 
+        AND sector.estado = 'ACTIVO'  
+        AND numero.estado ='ATENDIDO'    AND users.id = '".$usuario_id."'
+        AND  numero.fecha_creacion BETWEEN '".$fecha_desde."' AND '".$fecha_hasta."' ORDER BY   numero.fecha_creacion ASC
+       "));
+    }
+
+     $resultArray = json_decode(json_encode($res), true);
+     return $resultArray;
+}
+
 /* -------------------------------------------------------------------------- */
 /*                    ACTUALIZO EL ULTIMO NUMERO  Y ESTADO                    */
 /* -------------------------------------------------------------------------- */
@@ -274,6 +345,19 @@ private function actualizarLlamando($sector_usuario_id, $numero_id, $estado){
         //ACTUALIZO EL LLAMADO Y DEVUELVO
       
         return response()->json($turno, "200");
+    }
+
+
+    
+    public function llamarNumeroSeleccionado(Request $request) {
+        
+    
+        $numero_id = $request->input('numero_id');
+        $sector_usuario_id = $request->input('sector_usuario_id');
+
+        $llamando = $this->actualizarUltimoTurno($sector_usuario_id,$numero_id,'LLAMANDO');
+        $this->actualizarLlamando($sector_usuario_id,$numero_id,'LLAMANDO');
+        return response()->json($llamando, "200");
     }
 
 /* -------------------------------------------------------------------------- */
