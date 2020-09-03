@@ -260,6 +260,15 @@ public function getListadoSectorCondicion(Request $request){
      return $resultArray;
 }
 
+
+
+public function getLlamando(){
+
+$res = DB::select( DB::raw("SELECT numero_id, llamando.sector_usuario_id, ultimo_llamado, sector_usuario.puesto_defecto, sector.sector_nombre, numero.numero, sector.sector_abreviado 
+FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.id AND numero.sector_id = sector.id AND sector_usuario.id = llamando.sector_usuario_id
+ "));
+    return response()->json($res, "200");
+}
 /* -------------------------------------------------------------------------- */
 /*                    ACTUALIZO EL ULTIMO NUMERO  Y ESTADO                    */
 /* -------------------------------------------------------------------------- */
@@ -314,6 +323,40 @@ private function actualizarLlamando($sector_usuario_id, $numero_id, $estado){
 }
 
 
+ function getProximoNumero(Request $request){
+    $sector_usuario_id = $request->input('sector_usuario_id');
+
+    // VERIFICO SI HAY NUMERO PARA EL SECTOR
+     // SI OBTENGO EL NUMERO ACTUALIZO AL QUE LLAME Y LO COLOCO ATENDIDO CON SU HORA 
+    $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);      
+  // var_dump($turno);
+    if(Count($turno) ==0){
+                // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS 
+        $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
+      //  echo $turno;
+      //  $this->actualizarLlamando($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
+    } 
+
+    if($turno){
+      //  $this->actualizarTurnoEstadoAtendido($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
+        //$this->actualizarUltimoTurno($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
+        //$this->actualizarLlamando($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
+    } else{
+         //$this->actualizarTurnoEstadoAtendido($sector_usuario_id, 0, 'ATENDIDO');   
+    }
+  
+
+    // VERIFICO REGLAS
+
+    //ACTUALIZO EL LLAMADO Y DEVUELVO
+    
+   if(count($turno) > 0){
+    return response()->json($turno[0], "200");
+   } else {
+    return response()->json($turno, "200");
+   }
+}
+
 
 
     public function llamar(Request $request) {
@@ -343,8 +386,13 @@ private function actualizarLlamando($sector_usuario_id, $numero_id, $estado){
         // VERIFICO REGLAS
 
         //ACTUALIZO EL LLAMADO Y DEVUELVO
-      
+        
+       if(count($turno) > 0){
+        return response()->json($turno[0], "200");
+       } else {
         return response()->json($turno, "200");
+       }
+        
     }
 
 
@@ -381,8 +429,8 @@ public function getSectorByUsuario(Request $request){
     $usuario_id = $request->input('usuario_id');
 
    $res = DB::select( DB::raw(
-   "SELECT sector_usuario.id, `usuario_id`, `sector_id`, `fecha_ingreso`, `puesto_defecto`, users.name, users.nombreyapellido, users.email, users.admin, sector.sector_nombre, sector.sector_abreviado, sector.estado 
-   FROM `sector_usuario`, users, sector 
+   "SELECT sector_usuario.id, usuario_id, sector_id, fecha_ingreso, puesto_defecto, users.name, users.nombreyapellido, users.email, users.admin, sector.sector_nombre, sector.sector_abreviado, sector.estado 
+   FROM sector_usuario, users, sector 
    WHERE sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id  AND sector_usuario.usuario_id = :usuario_id
   "), array(                       
        'usuario_id' => $usuario_id

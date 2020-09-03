@@ -15,6 +15,7 @@ header('Access-Control-Allow-Origin: *');
     header('Access-Control-Max-Age: 1000');
     header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Authorization');
     header("Access-Control-Allow-Origin: http://localhost:4200");
+  //  header("Access-Control-Allow-Origin: http://localhost:4300");
    // header("Access-Control-Allow-Origin: http://localhost");
    // header("Access-Control-Allow-Origin: http://productosgraziani.com.ar/");
    // header("Access-Control-Allow-Origin: http://www.productosgraziani.com.ar/");

@@ -49,9 +49,21 @@ Route::name('turnos')->get('turnos/llamar/llamar', 'Turnos\TurnosController@Llam
 Route::name('turnos')->get('turnos/llamar/llamar/repetir', 'Turnos\TurnosController@LlamarRepetir'); 
 Route::name('turnos')->get('turnos/llamar/llamar/seleccionado', 'Turnos\TurnosController@llamarNumeroSeleccionado');
 Route::name('turnos')->get('turnos/llamar/pantalla', 'Turnos\TurnosController@getListadoPantalla'); 
+Route::name('turnos')->get('turnos/pantalla/llamando', 'Turnos\TurnosController@getLlamando');
 Route::name('turnos')->get('turnos/consulta/condicion/estado', 'Turnos\TurnosController@getListadoSectorCondicion'); 
+
 Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero'); 
 Route::name('turnos-gestion')->get('turnos/usuario/sector', 'Turnos\TurnosController@getSectorByUsuario');
+
+
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                                 MULTIMEDIA                                 */
+/* -------------------------------------------------------------------------- */
+
+Route::name('turnos-gestion')->get('multimedia/ordenado', 'Multimedia\MultimediaController@getMultimedia');
 
 
 /* --------------------------------------------------------------------------  */
@@ -85,7 +97,7 @@ Route::name('mantenimiento')->put( 'mantenimiento/regla/{id}', 'Mantenimiento\Ma
 /* --------------------------------------------------------------------------  */
 /*                             RUTAS DE ARCHIVOS                          */
 /* -------------------------------------------------------------------------- */
-Route::name('archivos')->post('/multiuploads/estudios', 'Upload\UploadController@showUploadFile');
+Route::name('archivos')->post('/multiuploads/multimedia', 'Upload\UploadController@showUploadFile');
 Route::name('archivos')->post('/multiuploads/estudios/datos', 'Upload\UploadController@showUploadFileDatos');
 Route::name('archivos')->post('/multiuploads/texto', 'Files\FilesController@createTestTextFile'); 
 Route::name('archivos')->post('/multiuploads/texto/cirugia', 'Files\FilesController@createTestTextFileCirugia'); 
