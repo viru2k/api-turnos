@@ -98,9 +98,7 @@ Route::name('mantenimiento')->put( 'mantenimiento/regla/{id}', 'Mantenimiento\Ma
 /*                             RUTAS DE ARCHIVOS                          */
 /* -------------------------------------------------------------------------- */
 Route::name('archivos')->post('/multiuploads/multimedia', 'Upload\UploadController@showUploadFile');
-Route::name('archivos')->post('/multiuploads/estudios/datos', 'Upload\UploadController@showUploadFileDatos');
-Route::name('archivos')->post('/multiuploads/texto', 'Files\FilesController@createTestTextFile'); 
-Route::name('archivos')->post('/multiuploads/texto/cirugia', 'Files\FilesController@createTestTextFileCirugia'); 
-Route::name('archivos')->get('/multiuploads/estudios/verimagen', 'Upload\UploadController@getEstudioImagenes'); 
+Route::name('archivos')->post('/multiuploads/multimedia/datos', 'Upload\UploadController@UploadFileDatos');  
+Route::name('archivos')->put('/multiuploads/multimedia/datos/{id}', 'Upload\UploadController@UploadFileDatosUpdate');
 
 /** CHAT **/

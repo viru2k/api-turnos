@@ -56,92 +56,57 @@ $fecha = date("Y-m-d-Hi");
 $allowedfileExtension=['MP4','jpg','png','jpeg','avi'];
 $files = $request->file('images');
 
-$filename = $files->getClientOriginalName();
+//$filename = $files->getClientOriginalName();
 $extension = $files->getClientOriginalExtension();
-//$check=in_array($extension,$allowedfileExtension);
-$destinationPath = 'uploads/';
-$without_extension = pathinfo($files->getClientOriginalName(), PATHINFO_FILENAME);
-  echo $filename;
-  echo $extension;
-  echo $destinationPath;  
+$check=in_array($extension,$allowedfileExtension);
+if($check){
+  $destinationPath = 'uploads/';
+$without_extension = pathinfo($fecha.$files->getClientOriginalName(), PATHINFO_FILENAME);
+  $files->move($destinationPath,$without_extension.'.'.$extension);
+}else {
+  return response()->json("Extension erronea", 301);
+}
 
-$files->move($destinationPath,$filename);
+ // echo $filename;
+ // echo $extension;
+ // echo $destinationPath;  
 
 
 
-        return response()->json("Upload Successfully", 201);
+
+
+        return response()->json($without_extension.'.'.$extension, 201);
      }
 
 
-     public function showUploadFileDatos(Request $request){
-        $fecha = date("Y-m-d-Hi");
-        $t =$request;
-        $subcarpeta = 
-        $tmp_fecha = str_replace('/', '-', $t[0]["fecha_estudio"]);
-         $fecha_estudio =  date('Y-m-d H:i', strtotime($tmp_fecha));
-    $id =    DB::table('estudio')->insertGetId(
-         ['estudio' => $t[0]["estudio"],
-        'paciente_id' => $t[0]["paciente_id"],
-         'medico_id' => $t[0]["medico_id"],
-         'fecha_estudio' => $fecha_estudio,
-         'usuario_realiza_id' => $t[0]["usuario_realiza_id"],
-         'updated_at' => date("Y-m-d H:i:s"),
-         'created_at' => date("Y-m-d H:i:s")
-         ]           
-        );
-        $i = 0;
-        while(isset($t[$i])){
-            
-      //  $usuario_id=$t[$i]["usuario_id"];
-    //    $tmp_fecha = str_replace('/', '-', $t[$i]["fecha"]);
-       // $fecha_desde =  date('Y-m-d H:i', strtotime($tmp_fecha));   
-         $estudio_id =    DB::table('estudios_imagen')->insertGetId(             
-            [
-            'estudio_id' => $id,
-            'nombre' => $t[$i]["file_name"],
-            'file' => $t[$i]["file"],
-            'url' => 'uploads/'.$fecha,
-            'updated_at' => date("Y-m-d H:i:s"),
-            'created_at' => date("Y-m-d H:i:s")
-             ]           
-            );   
-            $i++;
-        }    
-
-        $FICHA_id =    DB::table('ficha')->insertGetId(
-            [
-           'paciente_id' => $t[0]["paciente_id"],
-            'PACIENTE' => $t[0]["paciente_dni"],
-            'SINTOMAS_SIGNOS' => $t[0]["SINTOMAS_SIGNOS"],
-            'MEDICONOM' => 'ESTUDIOS',
-            'MEDICO' => 'SIS-NU',
-            'FECHA' => $fecha_estudio
-            
-            ]           
-           );
-
-           $FICHAOFTALMO_id =    DB::table('fichaoftal01')->insertGetId(
-            ['estudio_id' => $id,          
-            'estudio_nombre' => $t[0]["estudio"],
-            'NUMERO' => $FICHA_id,
-            'updated_at' => date("Y-m-d H:i:s"),
-            'created_at' => date("Y-m-d H:i:s")
-            ]           
-           );
-        return response()->json($t, "201");
-    }
-
-
-    public function getEstudioImagenes(Request $request){
-        $id =$request->input('id');
-
-        $horario = DB::select( DB::raw("SELECT estudio.id as estudio_id, estudio.paciente_id , fecha_estudio, nombre, file, url, estudio FROM `estudio`, estudios_imagen WHERE  estudio.id = estudios_imagen.estudio_id AND estudio.id = ".$id."
-    "));
+     public function UploadFileDatos(Request $request){
        
-      return response()->json($horario, 201);
-
+    $id =    DB::table('multimedia')->insertGetId([
+         'archivo_nombre' => $request["archivo_nombre"],
+         'archivo_nombre_original' => $request["archivo_nombre_original"],
+         'archivo_descripcion' => $request["archivo_descripcion"],
+         'orden' => $request["orden"],
+         'fecha_carga' => $request["fecha_carga"],
+         'fecha_vencimiento' => $request["fecha_vencimiento"]      
+          ]);
+       
+        return response()->json($id, "201");
     }
-    public function getLocalStoragePath(){
-   // echo Storage::disk('local')->url($fileName);
+
+
+    public function UploadFileDatosUpdate(Request $request, $id){
+   //  echo  $request->input('tiene_vencimiento');
+    $res =  DB::table('multimedia')
+    ->where('id', $id)
+    ->update([  
+      'archivo_nombre' => $request->input('archivo_nombre'),
+      'archivo_nombre_original' => $request->input('archivo_nombre_original'),
+      'archivo_descripcion' => $request->input('archivo_descripcion'),
+      'orden' => $request->input('orden'),
+      'fecha_carga' => $request->input('fecha_carga'),
+      'fecha_vencimiento' => $request->input('fecha_vencimiento'),
+      'tiene_vencimiento' => $request->input('tiene_vencimiento')
+     ]);
+     return response()->json($res, "201");
 }
 }
