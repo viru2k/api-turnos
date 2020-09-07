@@ -183,14 +183,14 @@ class MantenimientoController extends Controller
 /*                       OBTENER SECTOR USUARIO ASOCIADO                      */
 /* -------------------------------------------------------------------------- */
 
-    public function getSectorUsuarioAsociado()
+    public function getSectorUsuarioAsociado(Request $request)
     {      
-      $res = DB::select( DB::raw(
-     "SELECT sector.id , `sector_nombre`, `sector_abreviado`, `estado`,sector_usuario_asociado.id as sector_usuario_id,
-     sector_usuario_asociado.sector_usuario_id, sector_usuario_asociado.regla_id,
-      sector_usuario_asociado.fecha_creacion, users.nombreyapellido , reglas.regla, reglas.prioridad, sector_usuario.puesto_defecto
-     FROM sector, sector_usuario_asociado, sector_usuario, users,  reglas 
-     WHERE  sector_usuario_asociado.sector_id = sector.id AND sector_usuario.id = sector_usuario_asociado.sector_usuario_id AND reglas.id = sector_usuario_asociado.regla_id AND users.id = sector_usuario.usuario_id
+    $usuario_id = $request->input("usuario_id");
+    
+    $res = DB::select( DB::raw(
+     "SELECT sector.id as sector_id , `sector_nombre`, `sector_abreviado`, `estado`,sector_usuario_asociado.usuario_id, sector_usuario_asociado.regla_id,sector_usuario_asociado.fecha_creacion, users.nombreyapellido , reglas.regla, reglas.prioridad,  users.id as usuario_id, sector_usuario_asociado.id  as sector_usuario_asociado_id 
+     FROM sector, sector_usuario_asociado, users,  reglas 
+     WHERE  sector_usuario_asociado.sector_id = sector.id  AND reglas.id = sector_usuario_asociado.regla_id AND users.id = sector_usuario_asociado.usuario_id AND users.id = '".$usuario_id."'
        "));
           return response()->json($res, "200");
     }
@@ -220,22 +220,27 @@ class MantenimientoController extends Controller
 /*                      INSERTAR SECTOR USUARIO ASOCIADO                      */
 /* -------------------------------------------------------------------------- */
 
-    public function setSectorUsuarioAsociado(Request $request)
+    public function setSectorUsuarioAsociado(Request $request,$id)
     {      
-     try {
 
-        $id = DB::table('secto_usuario_asociado')->insertGetId([
-            'sector_usuario_id' =>  $request->sector_usuario_id,  
-            'sector_id' => $request->sector_id,        
-            'fecha_ingreso' => date("Y-m-d H:i:s"),
-            'usuario_modifica_id' => $request->usuario_modifica_id,
-            'regla_id' => $request->regla_id,
-        ]);    
-                  
-     } catch (\Throwable $th) {
-         return  response()->json('NO SE PUDO CREAR EL TURNO ERROR :'. $th, "500");
-     }
-     return response()->json($id, "200");
+        //$_request =$request->request->all();
+        //echo $all_parameter.;
+        //var_dump($all_parameter);
+       
+        foreach($request->request->all() as $req) {
+        //    var_dump($req);
+             $resp = DB::table('sector_usuario_asociado')->insertGetId([
+                'usuario_id' =>  $id,  
+                'sector_id' => $req['id'],        
+                'fecha_creacion' => date("Y-m-d H:i:s"),
+                'usuario_modifica_id' => $id,
+                'regla_id' => 1
+            ]);   
+           }
+          
+   
+    
+            return response()->json($resp, "201"); 
     }
 
 
@@ -243,10 +248,10 @@ class MantenimientoController extends Controller
 /*                       BORRAR SECTOR USUARIO ASOCIADO                       */
 /* -------------------------------------------------------------------------- */
 
-    public function delSectorUsuarioAsociado(Request $request)
+    public function delSectorUsuarioAsociado($id)
     {
-      $id = $request->input('id');
-    DB::table('secto_usuario_asociado')->where('id', '=', $id)->delete();
+      
+    DB::table('sector_usuario_asociado')->where('id', '=', $id)->delete();
     return response()->json($id, "200");
     }
 

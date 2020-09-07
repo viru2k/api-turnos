@@ -85,7 +85,7 @@ Route::name('mantenimiento')->get('mantenimiento/sector/usuario/nuevo', 'Manteni
 Route::name('mantenimiento')->put( 'mantenimiento/sector/usuario/{id}', 'Mantenimiento\MantenimientoController@updSectorUsuario');
 
 Route::name('mantenimiento')->get( 'mantenimiento/sector/usuario/asociar', 'Mantenimiento\MantenimientoController@getSectorUsuarioAsociado');
-Route::name('mantenimiento')->post('mantenimiento/sector/usuario/asociar', 'Mantenimiento\MantenimientoController@setSectorUsuarioAsociado');
+Route::name('mantenimiento')->post('mantenimiento/sector/usuario/asociar/{id}', 'Mantenimiento\MantenimientoController@setSectorUsuarioAsociado');
 Route::name('mantenimiento')->put( 'mantenimiento/sector/usuario/asociar/{id}', 'Mantenimiento\MantenimientoController@updSectorUsuarioAsociado');
 Route::name('mantenimiento')->delete('mantenimiento/sector/usuario/asociar/{id}', 'Mantenimiento\MantenimientoController@delSectorUsuarioAsociado');
 

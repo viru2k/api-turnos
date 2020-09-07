@@ -135,7 +135,7 @@ private function obtenerUltimoNumeroBySectorAsociado($sector_usuario_id){
      users.id as usuario_id, sector_usuario.id as sector_usuario_id
    FROM numero, sector, sector_usuario, sector_usuario_asociado, users 
    WHERE numero.sector_id = sector.id AND numero.sector_id = sector_usuario_asociado.sector_id 
-   AND sector_usuario_asociado.sector_usuario_id = sector_usuario.id 
+   AND sector_usuario_asociado.usuario_id = sector_usuario.id 
    AND sector_usuario.usuario_id = users.id 
    AND sector.estado = 'ACTIVO'  
    AND numero.estado ='PENDIENTE' 
