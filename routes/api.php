@@ -28,8 +28,8 @@ Route::post('oauth/token','\Laravel\Passport\Http\Controllers\AccessTokenControl
 /* -------------------------------------------------------------------------- */
 
 
-Route::name('user-info')->get('user/password', 'User\UserController@getPassword'); 
-Route::name('user-info')->get('user/info/menu', 'User\UserController@getUserDataAndMenu'); 
+Route::name('user-info')->get('user/password', 'User\UserController@getPassword');
+Route::name('user-info')->get('user/info/menu', 'User\UserController@getUserDataAndMenu');
 Route::name('user-info')->get('user/menu', 'User\UserController@getMenu');
 Route::name('user-info')->post('user/menu/add/{id}', 'User\UserController@agregarMenuUsuario');
 Route::name('user-info')->delete('user/menu/{id}', 'User\UserController@borrarMenuUsuario');
@@ -46,13 +46,13 @@ Route::resource('user', 'User\UserController');
 
 Route::name('turnos')->get('turnos/llamar/proximo', 'Turnos\TurnosController@getProximoNumero');
 Route::name('turnos')->get('turnos/llamar/llamar', 'Turnos\TurnosController@Llamar');
-Route::name('turnos')->get('turnos/llamar/llamar/repetir', 'Turnos\TurnosController@LlamarRepetir'); 
+Route::name('turnos')->get('turnos/llamar/llamar/repetir', 'Turnos\TurnosController@LlamarRepetir');
 Route::name('turnos')->get('turnos/llamar/llamar/seleccionado', 'Turnos\TurnosController@llamarNumeroSeleccionado');
-Route::name('turnos')->get('turnos/llamar/pantalla', 'Turnos\TurnosController@getListadoPantalla'); 
+Route::name('turnos')->get('turnos/llamar/pantalla', 'Turnos\TurnosController@getListadoPantalla');
 Route::name('turnos')->get('turnos/pantalla/llamando', 'Turnos\TurnosController@getLlamando');
-Route::name('turnos')->get('turnos/consulta/condicion/estado', 'Turnos\TurnosController@getListadoSectorCondicion'); 
+Route::name('turnos')->get('turnos/consulta/condicion/estado', 'Turnos\TurnosController@getListadoSectorCondicion');
 
-Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero'); 
+Route::name('turnos-gestion')->post('turnos/numero/nuevo', 'Turnos\TurnosController@setNumero');
 Route::name('turnos-gestion')->get('turnos/usuario/sector', 'Turnos\TurnosController@getSectorByUsuario');
 
 
@@ -64,7 +64,7 @@ Route::name('turnos-gestion')->get('turnos/usuario/sector', 'Turnos\TurnosContro
 /* -------------------------------------------------------------------------- */
 
 Route::name('turnos-gestion')->get('multimedia/ordenado', 'Multimedia\MultimediaController@getMultimedia');
-
+Route::name('multimedia')->delete('multimedia/{id}', 'Multimedia\MultimediaController@delMultimedia');
 
 /* --------------------------------------------------------------------------  */
 /*                             RUTAS DE MANTENIMIENTO                          */
@@ -94,11 +94,20 @@ Route::name('mantenimiento')->get( 'mantenimiento/regla', 'Mantenimiento\Manteni
 Route::name('mantenimiento')->post('mantenimiento/regla', 'Mantenimiento\MantenimientoController@setRegla');
 Route::name('mantenimiento')->put( 'mantenimiento/regla/{id}', 'Mantenimiento\MantenimientoController@updRegla');
 
+Route::name('mantenimiento')->get( 'mantenimiento/regla/sector', 'Mantenimiento\MantenimientoController@getSectorRegla');
+Route::name('mantenimiento')->get( 'mantenimiento/regla/sector/by/sector/id', 'Mantenimiento\MantenimientoController@getSectorReglaBySectorId');
+
+Route::name('mantenimiento')->post('mantenimiento/regla/sector', 'Mantenimiento\MantenimientoController@setSectorRegla');
+Route::name('mantenimiento')->put( 'mantenimiento/regla/sector/{id}', 'Mantenimiento\MantenimientoController@updSectorRegla');
+Route::name('mantenimiento')->delete('mantenimiento/regla/sector/{id}', 'Mantenimiento\MantenimientoController@delSectorRegla');
+
 /* --------------------------------------------------------------------------  */
 /*                             RUTAS DE ARCHIVOS                          */
 /* -------------------------------------------------------------------------- */
 Route::name('archivos')->post('/multiuploads/multimedia', 'Upload\UploadController@showUploadFile');
-Route::name('archivos')->post('/multiuploads/multimedia/datos', 'Upload\UploadController@UploadFileDatos');  
+Route::name('archivos')->post('/multiuploads/multimedia/datos', 'Upload\UploadController@UploadFileDatos');
 Route::name('archivos')->put('/multiuploads/multimedia/datos/{id}', 'Upload\UploadController@UploadFileDatosUpdate');
+
+
 
 /** CHAT **/

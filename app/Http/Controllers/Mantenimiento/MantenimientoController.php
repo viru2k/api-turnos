@@ -188,9 +188,9 @@ class MantenimientoController extends Controller
     $usuario_id = $request->input("usuario_id");
     
     $res = DB::select( DB::raw(
-     "SELECT sector.id as sector_id , `sector_nombre`, `sector_abreviado`, `estado`,sector_usuario_asociado.usuario_id, sector_usuario_asociado.regla_id,sector_usuario_asociado.fecha_creacion, users.nombreyapellido , reglas.regla, reglas.prioridad,  users.id as usuario_id, sector_usuario_asociado.id  as sector_usuario_asociado_id 
-     FROM sector, sector_usuario_asociado, users,  reglas 
-     WHERE  sector_usuario_asociado.sector_id = sector.id  AND reglas.id = sector_usuario_asociado.regla_id AND users.id = sector_usuario_asociado.usuario_id AND users.id = '".$usuario_id."'
+     "SELECT sector.id as sector_id , `sector_nombre`, `sector_abreviado`, `estado`,sector_usuario_asociado.usuario_id, sector_usuario_asociado.regla_id,sector_usuario_asociado.fecha_creacion, users.nombreyapellido ,  users.id as usuario_id, sector_usuario_asociado.id  as sector_usuario_asociado_id 
+     FROM sector, sector_usuario_asociado, users 
+     WHERE  sector_usuario_asociado.sector_id = sector.id  AND users.id = sector_usuario_asociado.usuario_id AND users.id = '".$usuario_id."'
        "));
           return response()->json($res, "200");
     }
@@ -263,7 +263,7 @@ class MantenimientoController extends Controller
 
 public function getRegla()
 {      
-  $res = DB::select( DB::raw("SELECT `id`, `regla`, `prioridad` FROM `reglas`
+  $res = DB::select( DB::raw("SELECT `id`, `regla` FROM `reglas`
    "));
       return response()->json($res, "200");
 }
@@ -279,8 +279,7 @@ public function updRegla(Request $request, $id)
   $res =  DB::table('reglas')
   ->where('id', $id)
   ->update([  
-    'regla' => $request->input('regla'),
-    'prioridad' => $request->input('prioridad')
+    'regla' => $request->input('regla')
    ]);
     
     return response()->json($res, "200");
@@ -296,8 +295,7 @@ public function setRegla(Request $request)
  try {
 
     $id = DB::table('reglas')->insertGetId([
-        'regla' =>  $request->regla,  
-        'prioridad' => $request->prioridad       
+        'regla' =>  $request->regla
     ]);    
               
  } catch (\Throwable $th) {
@@ -306,4 +304,76 @@ public function setRegla(Request $request)
  return response()->json($id, "200");
 }
  
+
+/* -------------------------------------------------------------------------- */
+/*                        OBTENGO LAS REGLAS POR SECTOR                       */
+/* -------------------------------------------------------------------------- */
+
+public function getSectorRegla()
+{      
+  $res = DB::select( DB::raw("SELECT reglas.id as regla_id,reglas.regla,  sector_regla.sector_usuario_id, sector_regla.usuario_previo, sector_regla.estado, sector_regla.id as sector_regla_id, sector.sector_nombre, sector_usuario.puesto_defecto  
+  FROM reglas, sector_regla, sector, sector_usuario 
+  WHERE  reglas.id = sector_regla.regla_id AND sector_regla.sector_usuario_id = sector_usuario.id AND sector_usuario.sector_id = sector.id
+   "));
+      return response()->json($res, "200");
+}
+
+
+
+public function getSectorReglaBySectorId(Request $request)
+{          
+    $sector_usuario_id = $request->input("sector_usuario_id");
+  $res = DB::select( DB::raw("SELECT reglas.id as regla_id,reglas.regla,  sector_regla.sector_usuario_id, sector_regla.usuario_previo, sector_regla.estado, sector_regla.id as sector_regla_id, sector.sector_nombre, sector_usuario.puesto_defecto  
+  FROM reglas, sector_regla, sector, sector_usuario 
+  WHERE  reglas.id = sector_regla.regla_id AND sector_regla.sector_usuario_id = sector_usuario.id AND sector_usuario.sector_id = sector.id AND sector_usuario_id = :sector_usuario_id
+   "), array('sector_usuario_id' => $sector_usuario_id)); 
+
+
+      return response()->json($res, "200");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                  GUARDO LA RELACION ENTRE SECTOR Y REGLAS                  */
+/* -------------------------------------------------------------------------- */
+
+public function setSectorRegla(Request $request)
+{      
+ try {
+
+    $id = DB::table('sector_regla')->insertGetId([
+        'sector_usuario_id' =>  $request->sector_usuario_id,
+        'regla_id' =>  $request->regla_id,
+        'usuario_previo' =>  $request->usuario_previo,
+        'estado' =>  $request->estado
+    ]);    
+              
+ } catch (\Throwable $th) {
+     return  response()->json('NO SE PUDO CREAR EL TURNO ERROR :'. $th, "500");
+ }
+ return response()->json($id, "200");
+}
+ 
+
+
+public function updSectorRegla(Request $request, $id)
+{
+
+  $res =  DB::table('sector_regla')
+  ->where('id', $id)
+  ->update([  
+    'sector_usuario_id' => $request->input('sector_usuario_id'),
+    'regla_id' => $request->input('regla_id'),
+    'usuario_previo' => $request->input('usuario_previo'),
+    'estado' => $request->input('estado')
+   ]);
+    
+    return response()->json($res, "200");
+}
+
+public function delSectorRegla($id)
+{
+  
+DB::table('sector_regla')->where('id', '=', $id)->delete();
+return response()->json($id, "200");
+}
 }

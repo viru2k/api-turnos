@@ -94,25 +94,47 @@ private function obtenerUltimoNumeroBySector($sector_usuario_id){
     $fecha_desde =   date('Y-m-d H:i:s', strtotime("$hoy $this->hora_desde"));
     $fecha_hasta =   date('Y-m-d H:i:s', strtotime("$tomorrow $this->hora_hasta"));
 
-   $res = DB::select( DB::raw(
-   "SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado , 
-   sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado , sector_usuario.puesto_defecto ,  users.id as usuario_id, sector_usuario.id as sector_usuario_id
-   FROM numero, sector ,sector_usuario , users
-   WHERE numero.sector_id = sector.id 
-   AND sector.estado = 'ACTIVO' 
-   AND sector_usuario.usuario_id = :sector_usuario_id
-   AND numero.estado ='PENDIENTE' 
-   AND sector_usuario.sector_id = sector.id 
-   AND sector_usuario.usuario_id = users.id
-   AND  numero.fecha_creacion BETWEEN :fecha_desde AND :fecha_hasta ORDER BY numero.fecha_creacion ASC 
-  "), array(                       
-       'sector_usuario_id' => $sector_usuario_id,
-       'fecha_desde' => $fecha_desde,
-       'fecha_hasta' => $fecha_hasta
-     ));
+  //  OBTENGO REGLA DE LLAMADO PARA EL NUMERO
 
-     $resultArray = json_decode(json_encode($res), true);
-     return $resultArray;
+  $regla = DB::select( DB::raw("SELECT reglas.id as regla_id,reglas.regla,  sector_regla.sector_usuario_id, sector_regla.usuario_previo, sector_regla.estado, sector_regla.id as sector_regla_id, sector.sector_nombre, sector_usuario.puesto_defecto  
+  FROM reglas, sector_regla, sector, sector_usuario 
+  WHERE  reglas.id = sector_regla.regla_id AND sector_regla.sector_usuario_id = sector_usuario.id AND sector_usuario.sector_id = sector.id AND sector_usuario_id = :sector_usuario_id
+   "), array('sector_usuario_id' => $sector_usuario_id)); 
+   
+
+if ((!$regla) ||($regla[0]->usuario_previo === 'NO'))  {
+  // SI VIENE VACIO REALIZO CONSULTA NORMA
+  // SIGNIFICA QUE EL PUESTO NO TIENE REGLA
+ 
+  echo ' SIN regla';
+  $res = DB::select( DB::raw(
+    "SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado , 
+    sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado , sector_usuario.puesto_defecto ,  users.id as usuario_id, sector_usuario.id as sector_usuario_id
+    FROM numero, sector ,sector_usuario , users
+    WHERE numero.sector_id = sector.id 
+    AND sector.estado = 'ACTIVO' 
+    AND sector_usuario.usuario_id = :sector_usuario_id
+    AND numero.estado ='PENDIENTE' 
+    AND sector_usuario.sector_id = sector.id 
+    AND sector_usuario.usuario_id = users.id
+    AND  numero.fecha_creacion BETWEEN :fecha_desde AND :fecha_hasta ORDER BY numero.fecha_creacion ASC 
+   "), array(                       
+        'sector_usuario_id' => $sector_usuario_id,
+        'fecha_desde' => $fecha_desde,
+        'fecha_hasta' => $fecha_hasta
+      ));
+
+  $resultArray = json_decode(json_encode($res), true);
+  return $resultArray;
+
+} else {
+
+  echo ' regla';
+
+}
+  
+
+    
 }
 
 

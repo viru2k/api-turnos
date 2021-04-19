@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Upload;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -41,7 +41,7 @@ class UploadController extends Controller
     else
     {
         return response()->json($request, 201);
-    
+
     }
     }
     }*/
@@ -51,9 +51,9 @@ class UploadController extends Controller
 
 
     public function showUploadFile(Request $request) {
-        
+
 $fecha = date("Y-m-d-Hi");
-$allowedfileExtension=['MP4','jpg','png','jpeg','avi'];
+$allowedfileExtension=['MP4','mp4','jpg','JPG','PNG','png','jpeg','JPEG','avi', 'AVI'];
 $files = $request->file('images');
 
 //$filename = $files->getClientOriginalName();
@@ -69,7 +69,7 @@ $without_extension = pathinfo($fecha.$files->getClientOriginalName(), PATHINFO_F
 
  // echo $filename;
  // echo $extension;
- // echo $destinationPath;  
+ // echo $destinationPath;
 
 
 
@@ -80,16 +80,16 @@ $without_extension = pathinfo($fecha.$files->getClientOriginalName(), PATHINFO_F
 
 
      public function UploadFileDatos(Request $request){
-       
+
     $id =    DB::table('multimedia')->insertGetId([
          'archivo_nombre' => $request["archivo_nombre"],
          'archivo_nombre_original' => $request["archivo_nombre_original"],
          'archivo_descripcion' => $request["archivo_descripcion"],
          'orden' => $request["orden"],
          'fecha_carga' => $request["fecha_carga"],
-         'fecha_vencimiento' => $request["fecha_vencimiento"]      
+         'fecha_vencimiento' => $request["fecha_vencimiento"]
           ]);
-       
+
         return response()->json($id, "201");
     }
 
@@ -98,7 +98,7 @@ $without_extension = pathinfo($fecha.$files->getClientOriginalName(), PATHINFO_F
    //  echo  $request->input('tiene_vencimiento');
     $res =  DB::table('multimedia')
     ->where('id', $id)
-    ->update([  
+    ->update([
       'archivo_nombre' => $request->input('archivo_nombre'),
       'archivo_nombre_original' => $request->input('archivo_nombre_original'),
       'archivo_descripcion' => $request->input('archivo_descripcion'),
