@@ -30,6 +30,11 @@ Route::name("turnos")->get(
   "Turnos\TurnosController@getProximoNumero"
 );
 
+Route::name("turnos")->get(
+  "turnos/atendidos/by/dates",
+  "Turnos\TurnosController@getListadoAtencionByDates"
+);
+
 Route::middleware("auth:api")->get("/user", function (Request $request) {
   return $request->user();
 });

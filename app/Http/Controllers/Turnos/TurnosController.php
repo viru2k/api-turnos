@@ -92,6 +92,44 @@ class TurnosController extends ApiController
   /*              OBTENGO EL PROXIMO NUMERO A LLAMAR PARA UN SECTOR  QUE ESTA PENDIENTE           */
   /* -------------------------------------------------------------------------- */
 
+  private function obtenerPrioridad($sector_usuario_id)
+  {
+    $tomorrow = date("Y-m-d", strtotime("+1 day"));
+    $hoy = date("Y-m-d");
+    $fecha_desde = date("Y-m-d H:i:s", strtotime("$hoy $this->hora_desde"));
+    $fecha_hasta = date(
+      "Y-m-d H:i:s",
+      strtotime("$tomorrow $this->hora_hasta")
+    );
+
+    $res = DB::select(
+      DB::raw(
+        "SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,
+   sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
+     users.id as usuario_id, sector_usuario.id as sector_usuario_id
+   FROM numero, sector, sector_usuario, sector_usuario_asociado, users
+   WHERE numero.sector_id = sector.id AND numero.sector_id = sector_usuario_asociado.sector_id
+   AND sector_usuario_asociado.usuario_id = sector_usuario.id
+   AND sector_usuario.usuario_id = users.id
+   AND sector.estado = 'ACTIVO'
+   AND numero.estado ='PENDIENTE'
+   AND numero.sector_id != sector_usuario.sector_id
+   AND sector_usuario.id = :sector_usuario_id
+   AND sector.es_prioridad = 'S'
+   AND  numero.fecha_creacion BETWEEN :fecha_desde AND :fecha_hasta ORDER BY   numero.fecha_creacion ASC
+  "
+      ),
+      [
+        "sector_usuario_id" => $sector_usuario_id,
+        "fecha_desde" => $fecha_desde,
+        "fecha_hasta" => $fecha_hasta,
+      ]
+    );
+
+    $resultArray = json_decode(json_encode($res), true);
+    return $resultArray;
+  }
+
   private function obtenerUltimoNumeroBySector($sector_usuario_id)
   {
     $tomorrow = date("Y-m-d", strtotime("+1 day"));
@@ -102,30 +140,26 @@ class TurnosController extends ApiController
       strtotime("$tomorrow $this->hora_hasta")
     );
 
-    //  OBTENGO REGLA DE LLAMADO PARA EL NUMERO
-    /*
-  $regla = DB::select( DB::raw("SELECT reglas.id as regla_id,reglas.regla,  sector_regla.sector_usuario_id, sector_regla.usuario_previo, sector_regla.estado, sector_regla.id as sector_regla_id, sector.sector_nombre, sector_usuario.puesto_defecto
-  FROM reglas, sector_regla, sector, sector_usuario
-  WHERE  reglas.id = sector_regla.regla_id AND sector_regla.sector_usuario_id = sector_usuario.id AND sector_usuario.sector_id = sector.id AND sector_usuario_id = :sector_usuario_id
-   "), array('sector_usuario_id' => $sector_usuario_id));
-
- */
-    //if ((!$regla) ||($regla[0]->usuario_previo === 'NO'))  {
-    // SI VIENE VACIO REALIZO CONSULTA NORMA
-    // SIGNIFICA QUE EL PUESTO NO TIENE REGLA
-
     $res = DB::select(
       DB::raw(
-        "SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,
+        "
+          SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,
     sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado , sector_usuario.puesto_defecto ,  users.id as usuario_id, sector_usuario.id as sector_usuario_id
     FROM numero, sector ,sector_usuario , users
     WHERE numero.sector_id = sector.id
     AND sector.estado = 'ACTIVO'
-    AND sector_usuario.usuario_id = :sector_usuario_id
+    AND sector_usuario.usuario_id = '" .
+          $sector_usuario_id .
+          "'
     AND numero.estado ='PENDIENTE'
     AND sector_usuario.sector_id = sector.id
     AND sector_usuario.usuario_id = users.id
-    AND  numero.fecha_creacion BETWEEN :fecha_desde AND :fecha_hasta ORDER BY numero.fecha_creacion ASC
+    AND es_prioridad = 'N'
+    AND  numero.fecha_creacion BETWEEN '" .
+          $fecha_desde .
+          "' AND '" .
+          $fecha_hasta .
+          "'
    "
       ),
       [
@@ -137,12 +171,6 @@ class TurnosController extends ApiController
 
     $resultArray = json_decode(json_encode($res), true);
     return $resultArray;
-
-    /* } else {
-
-  echo ' regla';
-
-} */
   }
 
   private function obtenerUltimoNumeroBySectorAndRecepcion($sector_usuario_id)
@@ -268,7 +296,7 @@ class TurnosController extends ApiController
           $fecha_desde .
           "' AND '" .
           $fecha_hasta .
-          "' ORDER BY   numero.fecha_creacion ASC  LIMIT 6)
+          "' ORDER BY   numero.fecha_creacion DESC  LIMIT 5)
    UNION
 
    (SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
@@ -281,7 +309,7 @@ class TurnosController extends ApiController
           $fecha_desde .
           "' AND '" .
           $fecha_hasta .
-          "' ORDER BY   numero.fecha_creacion ASC  LIMIT 6)
+          "' ORDER BY   numero.fecha_creacion DESC  LIMIT 3)
   "
       )
     );
@@ -457,29 +485,23 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
 
     // VERIFICO SI HAY NUMERO PARA EL SECTOR
     // SI OBTENGO EL NUMERO ACTUALIZO AL QUE LLAME Y LO COLOCO ATENDIDO CON SU HORA
-    $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+    $turno = $this->obtenerPrioridad($sector_usuario_id);
+
+    if (Count($turno) === 0) {
+      $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+    } else {
+      return response()->json($turno[0], "200");
+    }
+
     // var_dump($turno);
-    if (Count($turno) == 0) {
+    if (Count($turno) === 0) {
       // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS
       $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
-      //  echo $turno;
-      //  $this->actualizarLlamando($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
     }
-
-    if ($turno) {
-      //  $this->actualizarTurnoEstadoAtendido($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
-      //$this->actualizarUltimoTurno($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
-      //$this->actualizarLlamando($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
-    } else {
-      //$this->actualizarTurnoEstadoAtendido($sector_usuario_id, 0, 'ATENDIDO');
-    }
-
-    // VERIFICO REGLAS
 
     //ACTUALIZO EL LLAMADO Y DEVUELVO
 
     if (count($turno) > 0) {
-      return response()->json($turno[0], "200");
     } else {
       return response()->json($turno, "200");
     }
@@ -490,14 +512,15 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
     $sector_usuario_id = $request->input("sector_usuario_id");
 
     // VERIFICO SI HAY NUMERO PARA EL SECTOR
-    // SI OBTENGO EL NUMERO ACTUALIZO AL QUE LLAME Y LO COLOCO ATENDIDO CON SU HORA
-    $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+    //OBTENGO PRIORIDAD
+    $turno = $this->obtenerPrioridad($sector_usuario_id);
 
     if (Count($turno) === 0) {
-      // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS
-      $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
-      //  echo $turno;
-      //  $this->actualizarLlamando($turno[0]['sector_usuario_id'],$turno[0]['id'],'LLAMANDO');
+      $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+      if (Count($turno) === 0) {
+        // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS
+        $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
+      }
     }
 
     if ($turno) {
@@ -539,6 +562,7 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
     // SI OBTENGO EL NUMERO ACTUALIZO AL QUE LLAME Y LO COLOCO ATENDIDO CON SU HORA
     $turno = $this->obtenerUltimoNumeroBySectorAndRecepcion($sector_usuario_id);
 
+    var_dump($turno);
     if (Count($turno) === 0) {
       // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS
       $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
@@ -626,5 +650,39 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
     );
 
     return $res;
+  }
+
+  public function getListadoAtencionByDates(Request $request)
+  {
+    $fecha_desde = date(
+      "Y-m-d H:i:s",
+      strtotime($request->input("fecha_desde"))
+    );
+    $fecha_hasta = date(
+      "Y-m-d H:i:s",
+      strtotime($request->input("fecha_hasta"))
+    );
+
+    $res = DB::select(
+      DB::raw(
+        "
+        SELECT 
+        numero.id,numero.numero, numero.numero , numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
+        users.id as usuario_id, sector_usuario.id as sector_usuario_id, TIMESTAMPDIFF(HOUR,numero.llamando, numero.atendido) as hora, TIMESTAMPDIFF(MINUTE,numero.llamando, numero.atendido) as minutos, TIMESTAMPDIFF(SECOND,numero.llamando, numero.atendido) as segundos, TIMESTAMPDIFF(MINUTE,numero.fecha_creacion ,numero.atendido) as acumulado
+      FROM numero, sector, sector_usuario, users
+      WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id   
+        AND numero.estado ='ATENDIDO'
+   AND  numero.fecha_creacion BETWEEN '" .
+          $fecha_desde .
+          "' AND '" .
+          $fecha_hasta .
+          "' 
+   
+  "
+      )
+    );
+
+    $resultArray = json_decode(json_encode($res), true);
+    return $resultArray;
   }
 }
