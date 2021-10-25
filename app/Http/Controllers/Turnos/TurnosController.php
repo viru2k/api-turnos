@@ -143,18 +143,19 @@ class TurnosController extends ApiController
     $res = DB::select(
       DB::raw(
         "
-          SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,
-    sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado , sector_usuario.puesto_defecto ,  users.id as usuario_id, sector_usuario.id as sector_usuario_id
-    FROM numero, sector ,sector_usuario , users
-    WHERE numero.sector_id = sector.id
-    AND sector.estado = 'ACTIVO'
-    AND sector_usuario.usuario_id = '" .
+        SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,
+        sector_usuario.id AS sector_usuario_id,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado , sector_usuario.puesto_defecto ,  users.id as usuario_id, sector_usuario.id as sector_usuario_id
+        FROM numero, sector ,sector_usuario , users
+        WHERE numero.sector_id = sector.id
+        AND sector.estado = 'ACTIVO'
+        AND sector.id = (SELECT sector_usuario.sector_id FROM sector_usuario WHERE id =  '" .
           $sector_usuario_id .
-          "'
-    AND numero.estado ='PENDIENTE'
-    AND sector_usuario.sector_id = sector.id
-    AND sector_usuario.usuario_id = users.id
-    AND es_prioridad = 'N'
+          "')
+             
+        AND numero.estado ='PENDIENTE'
+        AND sector_usuario.sector_id = sector.id
+        AND sector_usuario.usuario_id = users.id
+        AND es_prioridad = 'N'
     AND  numero.fecha_creacion BETWEEN '" .
           $fecha_desde .
           "' AND '" .
@@ -286,13 +287,13 @@ class TurnosController extends ApiController
     $res = DB::select(
       DB::raw(
         "
-   (SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
-   users.id as usuario_id, sector_usuario.id as sector_usuario_id
- FROM numero, sector, sector_usuario, users
- WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id
-   AND sector.estado = 'ACTIVO'
-   AND numero.estado ='ATENDIDO'
-   AND  numero.fecha_creacion BETWEEN '" .
+        (SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
+        users.id as usuario_id, sector_usuario.id as sector_usuario_id
+      FROM numero, sector, sector_usuario, users
+      WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND numero.sector_id = sector.id
+        AND sector.estado = 'ACTIVO'
+        AND numero.estado ='ATENDIDO'
+        AND  numero.fecha_creacion BETWEEN '" .
           $fecha_desde .
           "' AND '" .
           $fecha_hasta .
@@ -302,7 +303,7 @@ class TurnosController extends ApiController
    (SELECT numero.id,numero.numero, (numero.numero +1) AS proximo, numero.fecha_creacion, numero.llamando, numero.atendido, numero.estado ,sector.id AS sector_id, sector.sector_nombre, sector.sector_abreviado, sector_usuario.puesto_defecto,
    users.id as usuario_id, sector_usuario.id as sector_usuario_id
  FROM numero, sector, sector_usuario, users
- WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND sector_usuario.sector_id = sector.id
+ WHERE  numero.sector_usuario_id = sector_usuario.id  AND sector_usuario.usuario_id = users.id AND numero.sector_id = sector.id
    AND sector.estado = 'ACTIVO'
    AND numero.estado ='LLAMANDO'
    AND  numero.fecha_creacion BETWEEN '" .
@@ -481,29 +482,35 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
 
   function getProximoNumero(Request $request)
   {
+    $turnoPrioridad = [];
+    $turnoSector = [];
+    $turnoAsociado = [];
     $sector_usuario_id = $request->input("sector_usuario_id");
 
-    // VERIFICO SI HAY NUMERO PARA EL SECTOR
     // SI OBTENGO EL NUMERO ACTUALIZO AL QUE LLAME Y LO COLOCO ATENDIDO CON SU HORA
-    $turno = $this->obtenerPrioridad($sector_usuario_id);
+    $turnoPrioridad = $this->obtenerPrioridad($sector_usuario_id);
 
-    if (Count($turno) === 0) {
-      $turno = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+    //SI NO HAY PRIORIDAD
+    if (Count($turnoPrioridad) === 0) {
+      $turnoSector = $this->obtenerUltimoNumeroBySector($sector_usuario_id);
+
+      //SI NO HAY SECTOR POR DEFECTO
+      if (Count($turnoSector) === 0) {
+        $turnoAsociado = $this->obtenerUltimoNumeroBySectorAsociado(
+          $sector_usuario_id
+        );
+
+        //SI NO HAY SECTOR ASOCIADO
+        if (Count($turnoAsociado) === 0) {
+          return response()->json($turnoAsociado, "200");
+        } else {
+          return response()->json($turnoAsociado, "200");
+        }
+      } else {
+        return response()->json($turnoSector, "200");
+      }
     } else {
-      return response()->json($turno[0], "200");
-    }
-
-    // var_dump($turno);
-    if (Count($turno) === 0) {
-      // SI NO HAY PARA EL SECTOR PIDO SECTORES ASOCIADOS
-      $turno = $this->obtenerUltimoNumeroBySectorAsociado($sector_usuario_id);
-    }
-
-    //ACTUALIZO EL LLAMADO Y DEVUELVO
-
-    if (count($turno) > 0) {
-    } else {
-      return response()->json($turno, "200");
+      return response()->json($turnoPrioridad, "200");
     }
   }
 
@@ -524,18 +531,21 @@ FROM llamando, sector_usuario, sector, numero WHERE llamando.numero_id = numero.
     }
 
     if ($turno) {
+      /*   var_dump($turno[0]);
+      echo "sector_usuario_id " . $turno[0]["sector_usuario_id"];
+      echo "id " . $turno[0]["id"]; */
       $this->actualizarTurnoEstadoAtendido(
-        $turno[0]["sector_usuario_id"],
+        $sector_usuario_id,
         $turno[0]["id"],
         "LLAMANDO"
       );
       $this->actualizarUltimoTurno(
-        $turno[0]["sector_usuario_id"],
+        $sector_usuario_id,
         $turno[0]["id"],
         "LLAMANDO"
       );
       $this->actualizarLlamando(
-        $turno[0]["sector_usuario_id"],
+        $sector_usuario_id,
         $turno[0]["id"],
         "LLAMANDO"
       );
